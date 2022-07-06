@@ -10,6 +10,7 @@ public class Event {
     private String description;
     private String price;
     private String date;
+    private User creator;
 
     public static Event fromEntity(EventEntity eventEntity){
         Event event = new Event();

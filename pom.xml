@@ -44,8 +44,11 @@
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/com.baomidou/mybatis-plus-boot-starter -->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-core</artifactId>
+			<version>5.6.1</version>
+		</dependency><!-- https://mvnrepository.com/artifact/com.baomidou/mybatis-plus-boot-starter -->
 		<dependency>
 			<groupId>com.baomidou</groupId>
 			<artifactId>mybatis-plus-boot-starter</artifactId>
