@@ -1,5 +1,6 @@
 type Query{
     events: [Event!]!
+    users: [User!]!
 }
 type Mutation{
     createEvent(eventInput : EventInput!): Event!
@@ -30,4 +31,5 @@ type User{
     id: ID!
     email: String!
     password: String
+    createdEvents:[Event!]
 }

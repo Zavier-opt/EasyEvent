@@ -27,11 +27,7 @@ public class EventDataFetcher {
     public List<Event> events(){
         List<EventEntity> eventEntityList = eventEntityMapper.selectList(new QueryWrapper<>());
         List<Event> eventList = eventEntityList.stream()
-                .map(eventEntity -> {
-                    Event event = Event.fromEntity(eventEntity);
-                    populateEventWithUser(event, eventEntity.getCreatorId());
-                    return event;
-                }).collect(Collectors.toList());
+                .map(Event::fromEntity).collect(Collectors.toList());
         return eventList;
     }
 
@@ -43,15 +39,20 @@ public class EventDataFetcher {
 
         Event newEvent = Event.fromEntity(newEventEntity);
 
-        populateEventWithUser(newEvent, newEventEntity.getCreatorId());
-
         return newEvent;
     }
 
-    private void populateEventWithUser(Event event, Integer userID){
-        UserEntity userEntity = userEntityMapper.selectById(userID);
+//    private void populateEventWithUser(Event event, Integer userID){
+//        UserEntity userEntity = userEntityMapper.selectById(userID);
+//        User user = User.fromEntity(userEntity);
+//        event.setCreator(user);
+//    }
+    @DgsData(parentType = "Event", field = "creator")
+    public User creator(DgsDataFetchingEnvironment dfe){
+        Event event = dfe.getSource();
+        UserEntity userEntity = userEntityMapper.selectById(event.getCreatorId());
         User user = User.fromEntity(userEntity);
-        event.setCreator(user);
+        return user;
     }
 
 }
