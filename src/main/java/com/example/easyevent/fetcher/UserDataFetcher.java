@@ -1,14 +1,16 @@
 package com.example.easyevent.fetcher;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.example.easyevent.custom.AuthContext;
 import com.example.easyevent.entity.EventEntity;
 import com.example.easyevent.entity.UserEntity;
 import com.example.easyevent.mapper.EventEntityMapper;
 import com.example.easyevent.mapper.UserEntityMapper;
-import com.example.easyevent.type.Event;
-import com.example.easyevent.type.User;
-import com.example.easyevent.type.UserInput;
+import com.example.easyevent.type.*;
+import com.example.easyevent.util.TokenUtil;
 import com.netflix.graphql.dgs.*;
+import com.netflix.graphql.dgs.context.DgsContext;
+import graphql.schema.DataFetchingEnvironment;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -28,13 +30,39 @@ public class UserDataFetcher {
         this.passwordEncoder = passwordEncoder;
     }
     @DgsQuery
-    public List<User> users(){
+    public List<User> users(DataFetchingEnvironment dfe){
+        AuthContext authContext = DgsContext.getCustomContext(dfe);
+        authContext.ensureAuthenticated();
+
         List<UserEntity> userEntityList = userEntityMapper.selectList(null);
         List<User> userList = userEntityList.stream()
                 .map(User::fromEntity)
                 .collect(Collectors.toList());
         return userList;
     }
+    @DgsQuery
+    public AuthData login(@InputArgument LoginInput loginInput){
+        UserEntity userEntity = this.findUserByEmail(loginInput.getEmail());
+        if(userEntity==null){
+            throw new RuntimeException("The user who used the email does not exist");
+        }
+
+        boolean match = passwordEncoder.matches(loginInput.getPassword(), userEntity.getPassword());
+        if(!match){
+            throw new RuntimeException("Password incorrect!");
+        }
+
+        String token = TokenUtil.signToken(userEntity.getId(), 1);
+
+        AuthData authData = new AuthData()
+                .setUserId(userEntity.getId())
+                .setToken(token)
+                .setTokenExpiration(1);
+        return authData;
+
+    }
+
+
     @DgsMutation
     public User createUser(@InputArgument UserInput userInput){
         ensureUserNotExists(userInput);
@@ -65,9 +93,15 @@ public class UserDataFetcher {
     private void ensureUserNotExists(UserInput userInput){
         QueryWrapper<UserEntity> queryWrapper = new QueryWrapper<UserEntity>();
         queryWrapper.lambda().eq(UserEntity::getEmail, userInput.getEmail());
-        if(userEntityMapper.selectCount(queryWrapper)>1){
+        if(userEntityMapper.selectCount(queryWrapper)>0){
             throw new RuntimeException("This is email has been used");
         }
+    }
+
+    private UserEntity findUserByEmail(String email){
+        QueryWrapper<UserEntity> queryWrapper = new QueryWrapper<>();
+        queryWrapper.lambda().eq(UserEntity::getEmail, email);
+        return userEntityMapper.selectOne(queryWrapper);
     }
 
 

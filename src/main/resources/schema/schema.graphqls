@@ -1,6 +1,7 @@
 type Query{
     events: [Event!]!
     users: [User!]!
+    login(loginInput: LoginInput!): AuthData!
 }
 type Mutation{
     createEvent(eventInput : EventInput!): Event!
@@ -12,7 +13,11 @@ input EventInput{
     description: String!
     price: String!
     date: String!
-    creatorId: Int!
+}
+
+input LoginInput{
+    email: String!
+    password: String!
 }
 
 type Event{
@@ -32,4 +37,10 @@ type User{
     email: String!
     password: String
     createdEvents:[Event!]
+}
+
+type AuthData{
+    userId: ID!
+    token: String!
+    tokenExpiration: Int!
 }
