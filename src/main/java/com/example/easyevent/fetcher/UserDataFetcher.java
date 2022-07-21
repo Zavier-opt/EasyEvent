@@ -2,8 +2,10 @@ package com.example.easyevent.fetcher;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.easyevent.custom.AuthContext;
+import com.example.easyevent.entity.BookingEntity;
 import com.example.easyevent.entity.EventEntity;
 import com.example.easyevent.entity.UserEntity;
+import com.example.easyevent.mapper.BookingEntityMapper;
 import com.example.easyevent.mapper.EventEntityMapper;
 import com.example.easyevent.mapper.UserEntityMapper;
 import com.example.easyevent.type.*;
@@ -23,11 +25,14 @@ public class UserDataFetcher {
     private final UserEntityMapper userEntityMapper;
     private final EventEntityMapper eventEntityMapper;
     private final PasswordEncoder passwordEncoder;
+    private final BookingEntityMapper bookingEntityMapper;
 
-    public UserDataFetcher(UserEntityMapper userEntityMapper, EventEntityMapper eventEntityMapper, PasswordEncoder passwordEncoder) {
+
+    public UserDataFetcher(UserEntityMapper userEntityMapper, EventEntityMapper eventEntityMapper, PasswordEncoder passwordEncoder, BookingEntityMapper bookingEntityMapper) {
         this.userEntityMapper = userEntityMapper;
         this.eventEntityMapper = eventEntityMapper;
         this.passwordEncoder = passwordEncoder;
+        this.bookingEntityMapper = bookingEntityMapper;
     }
     @DgsQuery
     public List<User> users(DataFetchingEnvironment dfe){
@@ -102,6 +107,21 @@ public class UserDataFetcher {
         QueryWrapper<UserEntity> queryWrapper = new QueryWrapper<>();
         queryWrapper.lambda().eq(UserEntity::getEmail, email);
         return userEntityMapper.selectOne(queryWrapper);
+    }
+
+    @DgsData(parentType = "User", field = "bookings")
+    public List<Booking> bookings(DgsDataFetchingEnvironment dfe){
+        User user = dfe.getSource();
+        QueryWrapper<BookingEntity> queryWrapper = new QueryWrapper<>();
+        queryWrapper.lambda().eq(BookingEntity::getUserId, user.getId());
+        List<BookingEntity> bookingEntityList = bookingEntityMapper.selectList(queryWrapper);
+        List<Booking> bookings = bookingEntityList
+                .stream()
+                .map(Booking::fromEntity)
+                .collect(Collectors.toList());
+        return bookings;
+
+
     }
 
 
